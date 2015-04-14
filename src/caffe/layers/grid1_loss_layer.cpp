@@ -4,12 +4,13 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
+#include <string>
 
 namespace caffe {
 
 template <typename Dtype>
-void Grid1LossLayer<Dtype>::Reshape(
-  const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+void Grid1LossLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom, 
+                                    const vector<Blob<Dtype>*>& top) {
   LossLayer<Dtype>::Reshape(bottom, top);
   CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))
       << "Inputs must have the same dimension.";
@@ -38,6 +39,7 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   Dtype loss = dot / bottom[0]->num() / Dtype(2);
   top[0]->mutable_cpu_data()[0] = loss;
 
+#define gaga 1
 #ifdef gaga
   //////////////////////////////////////////////////////////////////////
   // DEBUG CODE:
@@ -46,13 +48,13 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   float *data0 = (float *) bottom[0]->cpu_data();
   float *data1 = (float *) bottom[1]->cpu_data(); // <- label
-
+  
   int numImgs = bottom[0]->num();
   count = blobSize/numImgs;
   int edge = sqrt(count);
 
-  char predictStr[128];
-  char labelStr[128];
+  string predictStr;
+  string labelStr;
 
   int all_zeros = 1;
   for (int i=0; i<edge; i++) {
@@ -61,30 +63,27 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       }
   }
 
-  if (all_zeros) {
-      LOG(INFO) << "!!! EUCLIDEAN_LOSS: ALL ZEROS !!!";
-  }
-
-  if (print_cnt % 32 == 0) {
+  if (print_cnt % 1000 == 0 || (print_cnt-1) % 1000 == 0) {
+      if (all_zeros) {
+          LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
+      }
+    
       LOG(INFO) << "loss = " << loss << " count=" << count << " edge = " << edge << " numImgs= " << numImgs;
       LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
-
       LOG(INFO) << "GRID1 predict, label";
-      {
-          for (int i=0; i<edge; i++) {
-              strcpy(predictStr, "");
-              strcpy(labelStr, "");
 
-              for (int j=0; j<edge; j++) {
-                  char astr[100];
-                  sprintf(astr, "%0.1f ", data0[i*edge + j]);
-                  strcat(predictStr, astr);
-                  sprintf(astr, "%0.1f ", data1[i*edge + j]);
-                  strcat(labelStr, astr);
-              }
-              LOG(INFO) << "  " << predictStr << " " << labelStr;
+      for (int i=0; i<edge; i++) {
+          predictStr = "";
+          labelStr = "";
+
+          for (int j=0; j<edge; j++) {
+              char astr[10];
+              sprintf(astr, "%0.1f ", data0[i*edge + j]);
+              predictStr += astr;
+              sprintf(astr, "%0.1f ", data1[i*edge + j]);
+              labelStr += astr;
           }
-      
+          LOG(INFO) << "  " << predictStr << " " << labelStr;
       }
       LOG(INFO) << " ";
   }

@@ -482,6 +482,10 @@ V1LayerParameter_LayerType UpgradeV0LayerType(const string& type) {
     return V1LayerParameter_LayerType_DROPOUT;
   } else if (type == "euclidean_loss") {
     return V1LayerParameter_LayerType_EUCLIDEAN_LOSS;
+  } else if (type == "l1_loss") {
+    return V1LayerParameter_LayerType_L1_LOSS;
+  } else if (type == "grid1_loss") {
+    return V1LayerParameter_LayerType_GRID1_LOSS;
   } else if (type == "flatten") {
     return V1LayerParameter_LayerType_FLATTEN;
   } else if (type == "hdf5_data") {
@@ -863,12 +867,16 @@ const char* UpgradeV1LayerType(const V1LayerParameter_LayerType type) {
     return "DummyData";
   case V1LayerParameter_LayerType_EUCLIDEAN_LOSS:
     return "EuclideanLoss";
+  case V1LayerParameter_LayerType_L1_LOSS:
+    return "L1Loss";
   case V1LayerParameter_LayerType_ELTWISE:
     return "Eltwise";
   case V1LayerParameter_LayerType_EXP:
     return "Exp";
   case V1LayerParameter_LayerType_FLATTEN:
     return "Flatten";
+  case V1LayerParameter_LayerType_GRID1_LOSS:
+    return "Grid1Loss";
   case V1LayerParameter_LayerType_HDF5_DATA:
     return "HDF5Data";
   case V1LayerParameter_LayerType_HDF5_OUTPUT:

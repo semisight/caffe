@@ -73,7 +73,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   top_id_vecs_.resize(param.layer_size());
   bottom_need_backward_.resize(param.layer_size());
   for (int layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
-    LOG(INFO) << "*** net.cpp working on layer[" << layer_id << "]";
+      //LOG(INFO) << "*** net.cpp working on layer[" << layer_id << "]";
     // Inherit phase from net if unset.
     if (!param.layer(layer_id).has_phase()) {
       param.mutable_layer(layer_id)->set_phase(phase_);
@@ -89,7 +89,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 
     layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));
     layer_names_.push_back(layer_param.name());
-    LOG(INFO) << "Creating Layer " << layer_param.name();
+    //LOG(INFO) << "Creating Layer " << layer_param.name();
     bool need_backward = false;
     // Figure out this layer's input and output
     for (int bottom_id = 0; bottom_id < layer_param.bottom_size();
@@ -104,9 +104,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
                                        skip_propagate_down);
       // If a blob needs backward, this layer should provide it.
       need_backward |= blob_need_backward_[blob_id];
-      LOG(INFO) << "blob_need backward_[blob_id="<<blob_id<<"]="<< blob_need_backward_[blob_id];
+      //LOG(INFO) << "blob_need backward_[blob_id="<<blob_id<<"]="<< blob_need_backward_[blob_id];
     }
-    LOG(INFO) << "need_backward = " << need_backward;
+    //LOG(INFO) << "need_backward = " << need_backward;
     int num_top = layer_param.top_size();
     for (int top_id = 0; top_id < num_top; ++top_id) {
       AppendTop(param, layer_id, top_id, &available_blobs, &blob_name_to_idx);
@@ -126,16 +126,16 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     // After this layer is connected, set it up.
-    LOG(INFO) << "Setting up " << layer_names_[layer_id];
+    //LOG(INFO) << "Setting up " << layer_names_[layer_id];
     layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
     for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
       if (blob_loss_weights_.size() <= top_id_vecs_[layer_id][top_id]) {
         blob_loss_weights_.resize(top_id_vecs_[layer_id][top_id] + 1, Dtype(0));
       }
       blob_loss_weights_[top_id_vecs_[layer_id][top_id]] = layer->loss(top_id);
-      LOG(INFO) << "Top shape: " << top_vecs_[layer_id][top_id]->shape_string();
+      //LOG(INFO) << "Top shape: " << top_vecs_[layer_id][top_id]->shape_string();
       if (layer->loss(top_id)) {
-        LOG(INFO) << "    with loss weight " << layer->loss(top_id);
+          //LOG(INFO) << "    with loss weight " << layer->loss(top_id);
       }
       memory_used_ += top_vecs_[layer_id][top_id]->count();
     }
@@ -161,7 +161,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     if (need_backward) {
       for (int top_id = 0; top_id < top_id_vecs_[layer_id].size(); ++top_id) {
         blob_need_backward_[top_id_vecs_[layer_id][top_id]] = true;
-        LOG(INFO) << "blob_need_backward["<<top_id_vecs_[layer_id][top_id]<<"]=1   layer="<<layer_id<<"  top_id="<<top_id;
+        //LOG(INFO) << "blob_need_backward["<<top_id_vecs_[layer_id][top_id]<<"]=1   layer="<<layer_id<<"  top_id="<<top_id;
       }
     }
   }
@@ -181,7 +181,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     }
     if (!layer_contributes_loss) { 
         layer_need_backward_[layer_id] = false;
-        LOG(INFO) << "layer_contributes_loss = 0!";
+        //LOG(INFO) << "layer_contributes_loss = 0!";
     }
     if (layer_need_backward_[layer_id]) {
       LOG(INFO) << layer_names_[layer_id] << " needs backward computation.";

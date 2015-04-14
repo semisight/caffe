@@ -793,9 +793,11 @@ message V1LayerParameter {
     DROPOUT = 6;
     DUMMY_DATA = 32;
     EUCLIDEAN_LOSS = 7;
+    L1_LOSS = 41;
     ELTWISE = 25;
     EXP = 38;
     FLATTEN = 8;
+    GRID1_LOSS = 40;
     HDF5_DATA = 9;
     HDF5_OUTPUT = 10;
     HINGE_LOSS = 28;
