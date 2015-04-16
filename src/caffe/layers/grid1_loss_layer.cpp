@@ -51,15 +51,30 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   
   int numImgs = bottom[0]->num();
   count = blobSize/numImgs;
-  int edge = sqrt(count);
+  int blob_w = bottom[0]->width();
+  int blob_h = bottom[0]->height();
+  int dbg_w, dbg_h;
+
+  // Figure out dimentionality of data
+  if (blob_w>1 || blob_h>1) {
+      dbg_w = blob_w;
+      dbg_h = blob_h;
+  } else {
+      dbg_w = sqrt(count);
+      dbg_h = dbg_w;
+  }
+
+  // clamp so that it can be reasonably printed
+  if (dbg_w > 20) dbg_w = 20;
+  if (dbg_h > 20) dbg_h = 20;
 
   string predictStr;
   string labelStr;
 
   int all_zeros = 1;
-  for (int i=0; i<edge; i++) {
-      for (int j=0; j<edge; j++) {
-          if (data0[i*edge + j] != 0) all_zeros = 0;
+  for (int i=0; i<dbg_h; i++) {
+      for (int j=0; j<dbg_w; j++) {
+          if (data0[i*blob_w + j] != 0) all_zeros = 0;
       }
   }
 
@@ -68,19 +83,19 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
       }
     
-      LOG(INFO) << "loss = " << loss << " count=" << count << " edge = " << edge << " numImgs= " << numImgs;
+      LOG(INFO) << "loss = " << loss << " count=" << count << " dbg_w = " << dbg_w << " dbg_h = " << dbg_h << " numImgs= " << numImgs;
       LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
       LOG(INFO) << "GRID1 predict, label";
 
-      for (int i=0; i<edge; i++) {
+      for (int i=0; i<dbg_w; i++) {
           predictStr = "";
           labelStr = "";
 
-          for (int j=0; j<edge; j++) {
+          for (int j=0; j<dbg_h; j++) {
               char astr[10];
-              sprintf(astr, "%0.1f ", data0[i*edge + j]);
+              sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
               predictStr += astr;
-              sprintf(astr, "%0.1f ", data1[i*edge + j]);
+              sprintf(astr, "%0.1f " , data1[i*blob_w + j]);
               labelStr += astr;
           }
           LOG(INFO) << "  " << predictStr << " " << labelStr;
