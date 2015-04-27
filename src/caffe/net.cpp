@@ -89,7 +89,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
 
     layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));
     layer_names_.push_back(layer_param.name());
-    //LOG(INFO) << "Creating Layer " << layer_param.name();
+    LOG(INFO) << "Creating Layer " << layer_param.name();
     bool need_backward = false;
     // Figure out this layer's input and output
     for (int bottom_id = 0; bottom_id < layer_param.bottom_size();
@@ -126,14 +126,14 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     // After this layer is connected, set it up.
-    //LOG(INFO) << "Setting up " << layer_names_[layer_id];
+    LOG(INFO) << "Setting up " << layer_names_[layer_id];
     layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
     for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
       if (blob_loss_weights_.size() <= top_id_vecs_[layer_id][top_id]) {
         blob_loss_weights_.resize(top_id_vecs_[layer_id][top_id] + 1, Dtype(0));
       }
       blob_loss_weights_[top_id_vecs_[layer_id][top_id]] = layer->loss(top_id);
-      //LOG(INFO) << "Top shape: " << top_vecs_[layer_id][top_id]->shape_string();
+      LOG(INFO) << "Top shape: " << top_vecs_[layer_id][top_id]->shape_string();
       if (layer->loss(top_id)) {
           //LOG(INFO) << "    with loss weight " << layer->loss(top_id);
       }

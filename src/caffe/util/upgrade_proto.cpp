@@ -506,6 +506,8 @@ V1LayerParameter_LayerType UpgradeV0LayerType(const string& type) {
     return V1LayerParameter_LayerType_MULTINOMIAL_LOGISTIC_LOSS;
   } else if (type == "pool") {
     return V1LayerParameter_LayerType_POOLING;
+  } else if (type == "tiling") {
+    return V1LayerParameter_LayerType_TILING;
   } else if (type == "relu") {
     return V1LayerParameter_LayerType_RELU;
   } else if (type == "sigmoid") {
@@ -869,6 +871,8 @@ const char* UpgradeV1LayerType(const V1LayerParameter_LayerType type) {
     return "EuclideanLoss";
   case V1LayerParameter_LayerType_L1_LOSS:
     return "L1Loss";
+  case V1LayerParameter_LayerType_TILING:
+    return "Tiling";
   case V1LayerParameter_LayerType_ELTWISE:
     return "Eltwise";
   case V1LayerParameter_LayerType_EXP:

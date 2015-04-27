@@ -53,45 +53,44 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   count = blobSize/numImgs;
   int blob_w = bottom[0]->width();
   int blob_h = bottom[0]->height();
-  int dbg_w, dbg_h;
 
   // Figure out dimentionality of data
-  if (blob_w>1 || blob_h>1) {
-      dbg_w = blob_w;
-      dbg_h = blob_h;
-  } else {
-      dbg_w = sqrt(count);
-      dbg_h = dbg_w;
+  if (count == 4320) {
+      // is 120x36
+      blob_w = 120;
+      blob_h = 36;
+  } else if (count == 1080) {
+      blob_w = 60;
+      blob_h = 18;
+  } else if (blob_w==1 && blob_h==1) {
+      blob_w = sqrt(count);
+      blob_h = blob_w;
   }
-
-  // clamp so that it can be reasonably printed
-  if (dbg_w > 20) dbg_w = 20;
-  if (dbg_h > 20) dbg_h = 20;
 
   string predictStr;
   string labelStr;
 
-  int all_zeros = 1;
-  for (int i=0; i<dbg_h; i++) {
-      for (int j=0; j<dbg_w; j++) {
-          if (data0[i*blob_w + j] != 0) all_zeros = 0;
-      }
-  }
 
-  if (print_cnt % 1000 == 0 || (print_cnt-1) % 1000 == 0) {
+  if (print_cnt % 256 == 0) {
+      int all_zeros = 1;
+      for (int i=0; i<blob_h; i++) {
+          for (int j=0; j<blob_w; j++) {
+              if (data0[i*blob_w + j] != 0) all_zeros = 0;
+          }
+      }
       if (all_zeros) {
           LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
       }
     
-      LOG(INFO) << "loss = " << loss << " count=" << count << " dbg_w = " << dbg_w << " dbg_h = " << dbg_h << " numImgs= " << numImgs;
+      LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs;
       LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
-      LOG(INFO) << "GRID1 predict, label";
+      LOG(INFO) << "GRID1 predict, label ";
 
-      for (int i=0; i<dbg_w; i++) {
+      for (int i=0; i<blob_h; i+=blob_h/8) {
           predictStr = "";
           labelStr = "";
 
-          for (int j=0; j<dbg_h; j++) {
+          for (int j=0; j<blob_w; j+=blob_w/8) {
               char astr[10];
               sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
               predictStr += astr;
