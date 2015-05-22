@@ -259,7 +259,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 133 (last added: tiling_param)
+// LayerParameter next available layer-specific ID: 134 (last added: grid1loss_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -337,6 +337,7 @@ message LayerParameter {
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
   optional TilingParameter tiling_param = 132;
+  optional Grid1LossParameter grid1loss_param = 133;
 }
 
 // Message that stores parameters used to apply transformation
@@ -868,6 +869,7 @@ message V1LayerParameter {
   optional LossParameter loss_param = 42;
   optional V0LayerParameter layer = 1;
   optional TilingParameter tiling_param = 43;
+  optional Grid1LossParameter grid1loss_param = 44;
 }
 
 // Message that stores parameters for transforming a C x H x W blob into a
@@ -884,6 +886,17 @@ message TilingParameter {
   // Dimension of each tile. The number of input channels must be a multiple
   // of the square of this number.
   optional int32 tile_dim = 2;
+}
+
+message Grid1LossParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+  //Need some description for lambda
+  optional float lambda = 2 [default = 0.33];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters

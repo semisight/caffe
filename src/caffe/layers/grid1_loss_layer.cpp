@@ -29,7 +29,8 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   int blobSize = bottom[0]->count();
   float *label = (float *) bottom[1]->cpu_data();
-  float lambda = 0.33;
+  float lambda = this->layer_param_.grid1loss_param().lambda();//0.33;
+  //printf("lambda is %f\n", lambda);
 
   for (int i=0; i<blobSize; i++) {
       diff_.mutable_cpu_data()[i] *= (label[i] ? (1 + lambda) : lambda);
