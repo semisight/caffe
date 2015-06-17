@@ -343,45 +343,45 @@ class Grid1LossLayer : public LossLayer<Dtype> {
 /**
  * @the NV loss @f$
  */
-template <typename Dtype>
-class NVLossLayer : public LossLayer<Dtype> {
- public:
-  explicit NVLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), cutoff_(), sign_(), diff4ch_(), absdiff_(), rawLoss_() {}
-  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
+// template <typename Dtype>
+// class NVLossLayer : public LossLayer<Dtype> {
+//  public:
+//   explicit NVLossLayer(const LayerParameter& param)
+//       : LossLayer<Dtype>(param), cutoff_(), sign_(), diff4ch_(), absdiff_(), rawLoss_() {}
+//   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+//       const vector<Blob<Dtype>*>& top);
 
-  virtual inline const char* type() const { return "NVLoss"; }
-  virtual inline int ExactNumBottomBlobs() const { return 4; }
-  /**
-   * Unlike most loss layers, in the NVLossLayer we can backpropagate
-   * to 4 inputs -- override to return true and always allow force_backward.
-   */
-  virtual inline bool AllowForceBackward(const int bottom_index) const {
-    return true;
-  }
+//   virtual inline const char* type() const { return "NVLoss"; }
+//   virtual inline int ExactNumBottomBlobs() const { return 4; }
+//   /**
+//    * Unlike most loss layers, in the NVLossLayer we can backpropagate
+//    * to 4 inputs -- override to return true and always allow force_backward.
+//    */
+//   virtual inline bool AllowForceBackward(const int bottom_index) const {
+//     return true;
+//   }
 
- protected:
-  /// @copydoc NVLossLayer
-  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
-    //virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
-    //  const vector<Blob<Dtype>*>& top);
+//  protected:
+//   /// @copydoc NVLossLayer
+//   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+//       const vector<Blob<Dtype>*>& top);
+//     //virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+//     //  const vector<Blob<Dtype>*>& top);
 
-  /**
-   * @brief Computes the NV normalized error gradient w.r.t. the inputs.
-   */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
-    //virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
-    //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+//   /**
+//    * @brief Computes the NV normalized error gradient w.r.t. the inputs.
+//    */
+//   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+//       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+//     //virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+//     //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-  Blob<Dtype> cutoff_;
-  Blob<Dtype> sign_;
-  Blob<Dtype> diff4ch_;
-  Blob<Dtype> absdiff_;
-  Blob<Dtype> rawLoss_;
-};
+//   Blob<Dtype> cutoff_;
+//   Blob<Dtype> sign_;
+//   Blob<Dtype> diff4ch_;
+//   Blob<Dtype> absdiff_;
+//   Blob<Dtype> rawLoss_;
+// };
 
 /**
  * @normalized L1Loss @f$
