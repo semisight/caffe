@@ -69,69 +69,68 @@ void NVLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom, const v
   loss /= nBatch;
   top[0]->mutable_cpu_data()[0] = loss;
 
-#define gaga 0
-#ifdef gaga
-  //////////////////////////////////////////////////////////////////////
-  // DEBUG CODE:
-  ////////////////////////////////////////////////////////////////////// 
-  // static int print_cnt;
+  if(this->layer_param_.nvloss_param().debug() == 1){
+    //////////////////////////////////////////////////////////////////////
+    // DEBUG CODE:
+    ////////////////////////////////////////////////////////////////////// 
+    // static int print_cnt;
 
-  // float *data0 = (float *) bottom[0]->cpu_data();
-  // float *data1 = (float *) bottom[1]->cpu_data(); // <- label
-  
-  // int numImgs = bottom[0]->num();
-  // count = blobSize/numImgs;
-  // int blob_w = bottom[0]->width();
-  // int blob_h = bottom[0]->height();
-
-  // // Figure out dimentionality of data
-  // if (count == 4320) {
-  //     // is 120x36
-  //     blob_w = 120;
-  //     blob_h = 36;
-  // } else if (count == 1080) {
-  //     blob_w = 60;
-  //     blob_h = 18;
-  // } else if (blob_w==1 && blob_h==1) {
-  //     blob_w = sqrt(count);
-  //     blob_h = blob_w;
-  // }
-
-  // string predictStr;
-  // string labelStr;
-
-  // if (print_cnt % 200 == 0) {
-  //     int all_zeros = 1;
-  //     for (int i=0; i<blob_h; i++) {
-  //         for (int j=0; j<blob_w; j++) {
-  //             if (data0[i*blob_w + j] != 0) all_zeros = 0;
-  //         }
-  //     }
-  //     if (all_zeros) {
-  //         LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
-  //     }
+    // float *data0 = (float *) bottom[0]->cpu_data();
+    // float *data1 = (float *) bottom[1]->cpu_data(); // <- label
     
-  //     LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs << " lambda = " << lambda << " top[0]->cpu_diff()[0] " << top[0]->cpu_diff()[0];
-  //     LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
-  //     LOG(INFO) << "GRID1 predict, label ";
+    // int numImgs = bottom[0]->num();
+    // count = blobSize/numImgs;
+    // int blob_w = bottom[0]->width();
+    // int blob_h = bottom[0]->height();
 
-  //     for (int i=0; i<blob_h; i+=blob_h/8) {
-  //         predictStr = "";
-  //         labelStr = "";
+    // // Figure out dimentionality of data
+    // if (count == 4320) {
+    //     // is 120x36
+    //     blob_w = 120;
+    //     blob_h = 36;
+    // } else if (count == 1080) {
+    //     blob_w = 60;
+    //     blob_h = 18;
+    // } else if (blob_w==1 && blob_h==1) {
+    //     blob_w = sqrt(count);
+    //     blob_h = blob_w;
+    // }
 
-  //         for (int j=0; j<blob_w; j+=blob_w/8) {
-  //             char astr[10];
-  //             sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
-  //             predictStr += astr;
-  //             sprintf(astr, "%0.1f " , data1[i*blob_w + j]);
-  //             labelStr += astr;
-  //         }
-  //         LOG(INFO) << "  " << predictStr << " " << labelStr;
-  //     }
-  //     LOG(INFO) << " ";
-  // }
-  // print_cnt++;
-#endif
+    // string predictStr;
+    // string labelStr;
+
+    // if (print_cnt % 200 == 0) {
+    //     int all_zeros = 1;
+    //     for (int i=0; i<blob_h; i++) {
+    //         for (int j=0; j<blob_w; j++) {
+    //             if (data0[i*blob_w + j] != 0) all_zeros = 0;
+    //         }
+    //     }
+    //     if (all_zeros) {
+    //         LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
+    //     }
+      
+    //     LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs << " lambda = " << lambda << " top[0]->cpu_diff()[0] " << top[0]->cpu_diff()[0];
+    //     LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
+    //     LOG(INFO) << "GRID1 predict, label ";
+
+    //     for (int i=0; i<blob_h; i+=blob_h/8) {
+    //         predictStr = "";
+    //         labelStr = "";
+
+    //         for (int j=0; j<blob_w; j+=blob_w/8) {
+    //             char astr[10];
+    //             sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
+    //             predictStr += astr;
+    //             sprintf(astr, "%0.1f " , data1[i*blob_w + j]);
+    //             labelStr += astr;
+    //         }
+    //         LOG(INFO) << "  " << predictStr << " " << labelStr;
+    //     }
+    //     LOG(INFO) << " ";
+    // }
+    // print_cnt++;
+  } //end if debug
 }
 
 template <typename Dtype>

@@ -34,95 +34,94 @@ void L1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   top[0]->mutable_cpu_data()[0] = loss;
 
 
-#define gaga 1
-#ifdef gaga
-  //////////////////////////////////////////////////////////////////////
-  // DEBUG CODE:
-  ////////////////////////////////////////////////////////////////////// 
-  static int print_cnt;
+  if(this->layer_param_.l1loss_param().debug() == 1){
+    //////////////////////////////////////////////////////////////////////
+    // DEBUG CODE:
+    ////////////////////////////////////////////////////////////////////// 
+    static int print_cnt;
 
-  float *data0 = (float *) bottom[0]->cpu_data();
-  float *data1 = (float *) bottom[1]->cpu_data(); // <- label
-  int blobSize = bottom[0]->count();
-  
-  int numImgs = bottom[0]->num();
-  count = blobSize/numImgs;
-  int blob_w = bottom[0]->width();
-  int blob_h = bottom[0]->height();
-  int blob_d = bottom[0]->channels();
-
-  // Figure out dimentionality of data
-  if (count == 4320) {
-      // is 120x36
-      blob_w = 120;
-      blob_h = 36;
-  } else if (count == 1080) {
-      blob_w = 60;
-      blob_h = 18;
-  } else if (blob_w==1 && blob_h==1) {
-      blob_w = sqrt(count);
-      blob_h = blob_w;
-  }
-
-  string predictStr;
-  string labelStr;
-
-  if (print_cnt % 5 == 0) {
-
-      int all_zeros = 1;
-      int stride = blob_w*blob_h;
-      for (int c=0; c<blob_d; c++) {
-          for (int y=0; y<blob_h; y++) {
-              for (int x=0; x<blob_w; x++) {
-                  if (data0[c*stride + y*blob_w + x] != 0) all_zeros = 0;
-              }
-          }
-      }
-
-      if (all_zeros) {
-          LOG(INFO) << "!!! L1_LOSS: ALL ZEROS !!!";
-      }
+    float *data0 = (float *) bottom[0]->cpu_data();
+    float *data1 = (float *) bottom[1]->cpu_data(); // <- label
+    int blobSize = bottom[0]->count();
     
-      LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs;
-      LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
-      LOG(INFO) << "L1 net-output, label";
+    int numImgs = bottom[0]->num();
+    count = blobSize/numImgs;
+    int blob_w = bottom[0]->width();
+    int blob_h = bottom[0]->height();
+    int blob_d = bottom[0]->channels();
 
-      // int c=2;
-      // for (int y=0; y<blob_h; y+=blob_h/8) {
-      //     predictStr = "";
-      //     labelStr = "";
+    // Figure out dimentionality of data
+    if (count == 4320) {
+        // is 120x36
+        blob_w = 120;
+        blob_h = 36;
+    } else if (count == 1080) {
+        blob_w = 60;
+        blob_h = 18;
+    } else if (blob_w==1 && blob_h==1) {
+        blob_w = sqrt(count);
+        blob_h = blob_w;
+    }
 
-      //     for (int x=0; x<blob_w; x+=blob_w/8) {
-      //         char astr[10];
-      //         sprintf(astr, "%0.2f " , data0[c*stride + y*blob_w + x]); // capture the 3rd coordinate == x2
-      //         predictStr += astr;
-      //         sprintf(astr, "%0.2f " , data1[c*stride + y*blob_w + x]);
-      //         labelStr += astr;
-      //     }
-      //     LOG(INFO) << "  " << predictStr << " " << labelStr;
-      // }
-      // LOG(INFO) << " ";
-      for (int i=0; i<blob_h; i+=2) {
-          predictStr = "";
-          for (int j=0; j<blob_w; j+=2) {
-              Dtype value = (data0[i*blob_w + j] + data0[(i+1)*blob_w + j] + data0[i*blob_w + j+1] + data0[(i+1)*blob_w + j+1]) / 4;
-              predictStr.append(my_debug_symbol(value));
-          }
-          LOG(INFO) << "  " << predictStr;
-      }
-      LOG(INFO) << " ";
-      for (int i=0; i<blob_h; i+=2) {
-          labelStr = "";
-          for (int j=0; j<blob_w; j+=2) {
-              Dtype value = (data1[i*blob_w + j] + data1[(i+1)*blob_w + j] + data1[i*blob_w + j+1] + data1[(i+1)*blob_w + j+1]) / 4;
-              labelStr.append(my_debug_symbol(value));
-          }
-          LOG(INFO) << "  " << labelStr;
-      }
-      LOG(INFO) << " ";
-  }
-  print_cnt++;
-#endif
+    string predictStr;
+    string labelStr;
+
+    if (print_cnt % 5 == 0) {
+
+        int all_zeros = 1;
+        int stride = blob_w*blob_h;
+        for (int c=0; c<blob_d; c++) {
+            for (int y=0; y<blob_h; y++) {
+                for (int x=0; x<blob_w; x++) {
+                    if (data0[c*stride + y*blob_w + x] != 0) all_zeros = 0;
+                }
+            }
+        }
+
+        if (all_zeros) {
+            LOG(INFO) << "!!! L1_LOSS: ALL ZEROS !!!";
+        }
+      
+        LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs;
+        LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
+        LOG(INFO) << "L1 net-output, label";
+
+        // int c=2;
+        // for (int y=0; y<blob_h; y+=blob_h/8) {
+        //     predictStr = "";
+        //     labelStr = "";
+
+        //     for (int x=0; x<blob_w; x+=blob_w/8) {
+        //         char astr[10];
+        //         sprintf(astr, "%0.2f " , data0[c*stride + y*blob_w + x]); // capture the 3rd coordinate == x2
+        //         predictStr += astr;
+        //         sprintf(astr, "%0.2f " , data1[c*stride + y*blob_w + x]);
+        //         labelStr += astr;
+        //     }
+        //     LOG(INFO) << "  " << predictStr << " " << labelStr;
+        // }
+        // LOG(INFO) << " ";
+        for (int i=0; i<blob_h; i+=2) {
+            predictStr = "";
+            for (int j=0; j<blob_w; j+=2) {
+                Dtype value = (data0[i*blob_w + j] + data0[(i+1)*blob_w + j] + data0[i*blob_w + j+1] + data0[(i+1)*blob_w + j+1]) / 4;
+                predictStr.append(my_debug_symbol(value));
+            }
+            LOG(INFO) << "  " << predictStr;
+        }
+        LOG(INFO) << " ";
+        for (int i=0; i<blob_h; i+=2) {
+            labelStr = "";
+            for (int j=0; j<blob_w; j+=2) {
+                Dtype value = (data1[i*blob_w + j] + data1[(i+1)*blob_w + j] + data1[i*blob_w + j+1] + data1[(i+1)*blob_w + j+1]) / 4;
+                labelStr.append(my_debug_symbol(value));
+            }
+            LOG(INFO) << "  " << labelStr;
+        }
+        LOG(INFO) << " ";
+    }
+    print_cnt++;
+  } // end if debug
 }
 
 template <typename Dtype>
