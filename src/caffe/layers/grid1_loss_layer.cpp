@@ -6,7 +6,10 @@
 #include "caffe/vision_layers.hpp"
 #include <string>
 
+
 namespace caffe {
+
+template <typename Dtype> string my_debug_symbol(Dtype value);
 
 template <typename Dtype>
 void Grid1LossLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom, 
@@ -15,6 +18,7 @@ void Grid1LossLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))
       << "Inputs must have the same dimension.";
   diff_.ReshapeLike(*bottom[0]);
+  grad_.ReshapeLike(*bottom[0]);
 }
 
 template <typename Dtype>
@@ -34,6 +38,7 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   for (int i=0; i<blobSize; i++) {
       diff_.mutable_cpu_data()[i] *= (label[i] ? (1 + lambda) : lambda);
+      grad_.mutable_cpu_data()[i] = diff_.mutable_cpu_data()[i] * (label[i] ? (1 + lambda) : lambda);
   }
 
   Dtype dot = caffe_cpu_dot(count, diff_.cpu_data(), diff_.cpu_data());
@@ -41,7 +46,7 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   top[0]->mutable_cpu_data()[0] = loss;
 
 #define gaga 1
-#ifdef gaga
+#if gaga == 1
   //////////////////////////////////////////////////////////////////////
   // DEBUG CODE:
   ////////////////////////////////////////////////////////////////////// 
@@ -71,8 +76,7 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   string predictStr;
   string labelStr;
 
-
-  if (print_cnt % 256 == 0) {
+  if (print_cnt % 5 == 0) {
       int all_zeros = 1;
       for (int i=0; i<blob_h; i++) {
           for (int j=0; j<blob_w; j++) {
@@ -83,22 +87,40 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
           LOG(INFO) << "!!! GRID1_LOSS: ALL ZEROS !!!";
       }
     
-      LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs;
+      LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs << " lambda = " << lambda << " top[0]->cpu_diff()[0] " << top[0]->cpu_diff()[0];
       LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
       LOG(INFO) << "GRID1 predict, label ";
 
-      for (int i=0; i<blob_h; i+=blob_h/8) {
-          predictStr = "";
-          labelStr = "";
+      // for (int i=0; i<blob_h; i+=blob_h/8) {
+      //     predictStr = "";
+      //     labelStr = "";
 
-          for (int j=0; j<blob_w; j+=blob_w/8) {
-              char astr[10];
-              sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
-              predictStr += astr;
-              sprintf(astr, "%0.1f " , data1[i*blob_w + j]);
-              labelStr += astr;
+      //     for (int j=0; j<blob_w; j+=blob_w/8) {
+      //         char astr[10];
+      //         sprintf(astr, "%0.1f " , data0[i*blob_w + j]);
+      //         predictStr += astr;
+      //         sprintf(astr, "%0.1f " , data1[i*blob_w + j]);
+      //         labelStr += astr;
+      //     }
+      //     LOG(INFO) << "  " << predictStr << " " << labelStr;
+      // }
+      // LOG(INFO) << " ";
+      for (int i=0; i<blob_h; i+=2) {
+          predictStr = "";
+          for (int j=0; j<blob_w; j+=2) {
+              Dtype value = (data0[i*blob_w + j] + data0[(i+1)*blob_w + j] + data0[i*blob_w + j+1] + data0[(i+1)*blob_w + j+1]) / 4;
+              predictStr.append(my_debug_symbol(value));
           }
-          LOG(INFO) << "  " << predictStr << " " << labelStr;
+          LOG(INFO) << "  " << predictStr;
+      }
+      LOG(INFO) << " ";
+      for (int i=0; i<blob_h; i+=2) {
+          labelStr = "";
+          for (int j=0; j<blob_w; j+=2) {
+              Dtype value = (data1[i*blob_w + j] + data1[(i+1)*blob_w + j] + data1[i*blob_w + j+1] + data1[(i+1)*blob_w + j+1]) / 4;
+              labelStr.append(my_debug_symbol(value));
+          }
+          LOG(INFO) << "  " << labelStr;
       }
       LOG(INFO) << " ";
   }
@@ -107,8 +129,28 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
+string my_debug_symbol(Dtype value) {
+  string ans;
+  if(value >= 0.95) ans="X";
+  else if(value >= 0.85) ans="9";
+  else if(value >= 0.75) ans="8";
+  else if(value >= 0.65) ans="7";
+  else if(value >= 0.55) ans="6";
+  else if(value >= 0.45) ans="5";
+  else if(value >= 0.35) ans="4";
+  else if(value >= 0.25) ans="3";
+  else if(value >= 0.15) ans="2";
+  else if(value >= 0.05) ans="1";
+  else if(value >= -0.05) ans="-";
+  else ans = "-";
+
+  return ans;
+}
+
+template <typename Dtype>
 void Grid1LossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+
   for (int i = 0; i < 2; ++i) {
     if (propagate_down[i]) {
       const Dtype sign = (i == 0) ? 1 : -1;
@@ -116,7 +158,7 @@ void Grid1LossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       caffe_cpu_axpby(
           bottom[i]->count(),              // count
           alpha,                              // alpha
-          diff_.cpu_data(),                   // a
+          grad_.cpu_data(),                   // a
           Dtype(0),                           // beta
           bottom[i]->mutable_cpu_diff());  // b
     }

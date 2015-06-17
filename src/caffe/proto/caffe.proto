@@ -259,7 +259,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 134 (last added: grid1loss_param)
+// LayerParameter next available layer-specific ID: 137 (last added: l1loss_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -338,6 +338,9 @@ message LayerParameter {
   optional WindowDataParameter window_data_param = 129;
   optional TilingParameter tiling_param = 132;
   optional Grid1LossParameter grid1loss_param = 133;
+  optional NVLossParameter nvloss_param = 134;
+  optional L1NLossParameter l1nloss_param = 135;
+  optional L1LossParameter l1loss_param = 136;
 }
 
 // Message that stores parameters used to apply transformation
@@ -800,6 +803,7 @@ message V1LayerParameter {
     EXP = 38;
     FLATTEN = 8;
     GRID1_LOSS = 40;
+    NV_LOSS = 43;
     HDF5_DATA = 9;
     HDF5_OUTPUT = 10;
     HINGE_LOSS = 28;
@@ -870,6 +874,9 @@ message V1LayerParameter {
   optional V0LayerParameter layer = 1;
   optional TilingParameter tiling_param = 43;
   optional Grid1LossParameter grid1loss_param = 44;
+  optional NVLossParameter nvloss_param = 45;
+  optional L1NLossParameter l1nloss_param = 46;
+  optional L1LossParameter l1loss_param = 47;
 }
 
 // Message that stores parameters for transforming a C x H x W blob into a
@@ -897,6 +904,36 @@ message Grid1LossParameter {
   optional Engine engine = 1 [default = DEFAULT];
   //Need some description for lambda
   optional float lambda = 2 [default = 0.33];
+  optional int32 debug = 3 [default = 0];
+}
+
+message NVLossParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+  //cutoff value
+  optional float cutoff = 2 [default = 0.7];
+  optional float norm_ref = 3 [default = 0.09];
+  optional int32 debug = 4 [default = 0];
+}
+
+message L1LossParameter {
+  optional int32 debug = 1 [default = 0];
+}
+
+message L1NLossParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+  //cutoff value
+  optional float norm_ref = 2 [default = 0.09];
+  optional int32 debug = 3 [default = 0];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters
