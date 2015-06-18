@@ -904,7 +904,7 @@ message Grid1LossParameter {
   optional Engine engine = 1 [default = DEFAULT];
   //Need some description for lambda
   optional float lambda = 2 [default = 0.33];
-  optional int32 debug = 3 [default = 0];
+  optional bool debug_info = 3 [default = false];
 }
 
 //message NVLossParameter {
@@ -921,7 +921,7 @@ message Grid1LossParameter {
 //}
 
 message L1LossParameter {
-  optional int32 debug = 1 [default = 0];
+  optional bool debug_info = 1 [default = false];
 }
 
 message L1NLossParameter {
@@ -933,7 +933,7 @@ message L1NLossParameter {
   optional Engine engine = 1 [default = DEFAULT];
   //cutoff value
   optional float norm_ref = 2 [default = 0.09];
-  optional int32 debug = 3 [default = 0];
+  optional bool debug_info = 3 [default = false];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters

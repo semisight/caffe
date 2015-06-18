@@ -82,7 +82,7 @@ void L1NLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   //top[0]->mutable_cpu_data()[0] = loss;
 
 
-  if(this->layer_param_.l1nloss_param().debug() == 1){
+  if(this->layer_param_.l1nloss_param().debug_info()){
     //////////////////////////////////////////////////////////////////////
     // DEBUG CODE:
     ////////////////////////////////////////////////////////////////////// 

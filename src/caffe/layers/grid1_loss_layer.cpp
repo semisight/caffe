@@ -45,8 +45,9 @@ void Grid1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   Dtype loss = dot / bottom[0]->num() / Dtype(2);
   top[0]->mutable_cpu_data()[0] = loss;
 
+  //LOG(INFO) << this->layer_param_.grid1loss_param().debug_info();
 
-  if(this->layer_param_.grid1loss_param().lambda() == 1){
+  if(this->layer_param_.grid1loss_param().debug_info()){
     //////////////////////////////////////////////////////////////////////
     // DEBUG CODE:
     ////////////////////////////////////////////////////////////////////// 

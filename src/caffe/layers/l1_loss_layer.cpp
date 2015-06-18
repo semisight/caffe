@@ -7,7 +7,7 @@
 
 namespace caffe {
 
-template <typename Dtype> string my_debug_symbol(Dtype value);
+template <typename Dtype> string my_debug_symbol_bbox(Dtype value);
 
 template <typename Dtype>
 void L1LossLayer<Dtype>::Reshape(
@@ -34,7 +34,7 @@ void L1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   top[0]->mutable_cpu_data()[0] = loss;
 
 
-  if(this->layer_param_.l1loss_param().debug() == 1){
+  if(this->layer_param_.l1loss_param().debug_info()){
     //////////////////////////////////////////////////////////////////////
     // DEBUG CODE:
     ////////////////////////////////////////////////////////////////////// 
@@ -44,11 +44,11 @@ void L1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     float *data1 = (float *) bottom[1]->cpu_data(); // <- label
     int blobSize = bottom[0]->count();
     
-    int numImgs = bottom[0]->num();
+    int numImgs = bottom[0]->num(); // only shows first training image of this batch actually
     count = blobSize/numImgs;
     int blob_w = bottom[0]->width();
     int blob_h = bottom[0]->height();
-    int blob_d = bottom[0]->channels();
+    int blob_c = bottom[0]->channels();
 
     // Figure out dimentionality of data
     if (count == 4320) {
@@ -68,20 +68,6 @@ void L1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
     if (print_cnt % 5 == 0) {
 
-        int all_zeros = 1;
-        int stride = blob_w*blob_h;
-        for (int c=0; c<blob_d; c++) {
-            for (int y=0; y<blob_h; y++) {
-                for (int x=0; x<blob_w; x++) {
-                    if (data0[c*stride + y*blob_w + x] != 0) all_zeros = 0;
-                }
-            }
-        }
-
-        if (all_zeros) {
-            LOG(INFO) << "!!! L1_LOSS: ALL ZEROS !!!";
-        }
-      
         LOG(INFO) << "loss = " << loss << " count=" << count << " numImgs= " << numImgs;
         LOG(INFO) << "h = " << bottom[0]->height() << " w=" << bottom[0]->width() << " channels = " << bottom[0]->channels();
         LOG(INFO) << "L1 net-output, label";
@@ -101,44 +87,48 @@ void L1LossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         //     LOG(INFO) << "  " << predictStr << " " << labelStr;
         // }
         // LOG(INFO) << " ";
-        for (int i=0; i<blob_h; i+=2) {
+        int stride = blob_w * blob_h;
+
+        for (int i=0; i<blob_h; i++) {
             predictStr = "";
-            for (int j=0; j<blob_w; j+=2) {
-                Dtype value = (data0[i*blob_w + j] + data0[(i+1)*blob_w + j] + data0[i*blob_w + j+1] + data0[(i+1)*blob_w + j+1]) / 4;
-                predictStr.append(my_debug_symbol(value));
+            for (int j=0; j<blob_w; j++) {
+                Dtype absDiff = 0;
+                if(data0[0*stride + i*blob_w + j] == 0 && data1[0*stride + i*blob_w + j] == 0 && data0[1*stride + i*blob_w + j] == 0 && data1[1*stride + i*blob_w + j] == 0 &&
+                   data0[2*stride + i*blob_w + j] == 0 && data1[2*stride + i*blob_w + j] == 0 && data0[3*stride + i*blob_w + j] == 0 && data1[3*stride + i*blob_w + j] == 0) {
+                  predictStr.append("-");
+                }
+                else {
+                  for (int c=0; c<blob_c; c++){
+                      Dtype value_pred = data0[c*stride + i*blob_w + j];
+                      Dtype value_label = data1[c*stride + i*blob_w + j];
+                      Dtype diff = value_pred - value_label;
+                      absDiff += diff > 0 ? diff : -diff;
+                  }
+                  predictStr.append(my_debug_symbol_bbox(absDiff));
+                }
             }
             LOG(INFO) << "  " << predictStr;
         }
         LOG(INFO) << " ";
-        for (int i=0; i<blob_h; i+=2) {
-            labelStr = "";
-            for (int j=0; j<blob_w; j+=2) {
-                Dtype value = (data1[i*blob_w + j] + data1[(i+1)*blob_w + j] + data1[i*blob_w + j+1] + data1[(i+1)*blob_w + j+1]) / 4;
-                labelStr.append(my_debug_symbol(value));
-            }
-            LOG(INFO) << "  " << labelStr;
-        }
-        LOG(INFO) << " ";
-    }
+    } // end if print_cnt % 5
     print_cnt++;
   } // end if debug
 }
 
 template <typename Dtype>
-string my_debug_symbol(Dtype value) {
+string my_debug_symbol_bbox(Dtype value) {
   string ans;
-  if(value >= 0.95) ans="X";
-  else if(value >= 0.85) ans="9";
-  else if(value >= 0.75) ans="8";
-  else if(value >= 0.65) ans="7";
-  else if(value >= 0.55) ans="6";
-  else if(value >= 0.45) ans="5";
-  else if(value >= 0.35) ans="4";
-  else if(value >= 0.25) ans="3";
-  else if(value >= 0.15) ans="2";
-  else if(value >= 0.05) ans="1";
-  else if(value >= -0.05) ans="-";
-  else ans = "-";
+  if(value >= 0.095) ans="X";
+  else if(value >= 0.085) ans="9";
+  else if(value >= 0.075) ans="8";
+  else if(value >= 0.065) ans="7";
+  else if(value >= 0.055) ans="6";
+  else if(value >= 0.045) ans="5";
+  else if(value >= 0.035) ans="4";
+  else if(value >= 0.025) ans="3";
+  else if(value >= 0.015) ans="2";
+  else if(value >= 0.005) ans="1";
+  else ans = "o";
 
   return ans;
 }
