@@ -341,6 +341,45 @@ class Grid1LossLayer : public LossLayer<Dtype> {
 };
 
 /**
+ * @brief Computes the NVMask loss, a experimental one of Grid1Loss @f$
+ */
+template <typename Dtype>
+class NVMaskLossLayer : public LossLayer<Dtype> {
+ public:
+  explicit NVMaskLossLayer(const LayerParameter& param)
+      : LossLayer<Dtype>(param), diff_(), grad_() {}
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  virtual inline const char* type() const { return "NVMaskLoss"; }
+  /**
+   * Unlike most loss layers, in the Grid1LossLayer we can backpropagate
+   * to both inputs -- override to return true and always allow force_backward.
+   */
+  virtual inline bool AllowForceBackward(const int bottom_index) const {
+    return true;
+  }
+
+ protected:
+  /// @copydoc NVMaskLossLayer
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+    //virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+    //  const vector<Blob<Dtype>*>& top);
+
+  /**
+   * @brief Computes the Grid1 error gradient w.r.t. the inputs.
+   */
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+    //virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+    //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+  Blob<Dtype> diff_;
+  Blob<Dtype> grad_;
+};
+
+/**
  * @the NV loss @f$
  */
 // template <typename Dtype>
@@ -384,13 +423,52 @@ class Grid1LossLayer : public LossLayer<Dtype> {
 // };
 
 /**
+ * @hacked L2Loss. Nothing changed. add some dubug info@f$
+ */
+template <typename Dtype>
+class L2NLossLayer : public LossLayer<Dtype> {
+ public:
+  explicit L2NLossLayer(const LayerParameter& param)
+      : LossLayer<Dtype>(param), diff_() {}
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  virtual inline const char* type() const { return "L2NLoss"; }
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  /**
+   * Unlike most loss layers, in the NVLossLayer we can backpropagate
+   * to 4 inputs -- override to return true and always allow force_backward.
+   */
+  virtual inline bool AllowForceBackward(const int bottom_index) const {
+    return true;
+  }
+
+ protected:
+  /// @copydoc L1NLossLayer
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+    //virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+    //  const vector<Blob<Dtype>*>& top);
+
+  /**
+   * @brief Computes the NV normalized error gradient w.r.t. the inputs.
+   */
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+    //virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+    //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+  Blob<Dtype> diff_;
+};
+
+/**
  * @normalized L1Loss @f$
  */
 template <typename Dtype>
 class L1NLossLayer : public LossLayer<Dtype> {
  public:
   explicit L1NLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), sign_(), norm_(), diff_(), rawLoss_() {}
+      : LossLayer<Dtype>(param), sign_(), norm_h_(), norm_w_(), diff_() {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -420,9 +498,9 @@ class L1NLossLayer : public LossLayer<Dtype> {
     //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   Blob<Dtype> sign_;
-  Blob<Dtype> norm_;
+  Blob<Dtype> norm_h_;
+  Blob<Dtype> norm_w_;
   Blob<Dtype> diff_;
-  Blob<Dtype> rawLoss_;
 };
 
 /*
