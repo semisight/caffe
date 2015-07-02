@@ -341,6 +341,8 @@ message LayerParameter {
   //optional NVLossParameter nvloss_param = 134;
   optional L1NLossParameter l1nloss_param = 135;
   optional L1LossParameter l1loss_param = 136;
+  optional L2NLossParameter l2nloss_param = 137;
+  optional NVMaskLossParameter nvmaskloss_param = 138;
 }
 
 // Message that stores parameters used to apply transformation
@@ -877,6 +879,8 @@ message V1LayerParameter {
   //optional NVLossParameter nvloss_param = 45;
   optional L1NLossParameter l1nloss_param = 46;
   optional L1LossParameter l1loss_param = 47;
+  optional L2NLossParameter l2nloss_param = 48;
+  optional NVMaskLossParameter nvmaskloss_param = 49;
 }
 
 // Message that stores parameters for transforming a C x H x W blob into a
@@ -920,6 +924,23 @@ message Grid1LossParameter {
 //  optional int32 debug = 4 [default = 0];
 //}
 
+message NVMaskLossParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+  //Need some description for lambda
+  optional float lambda_0 = 2 [default = 1.0];
+  optional float lambda_1 = 3 [default = 1.0];
+  optional bool debug_info = 4 [default = false];
+  optional int32 debug_period = 5 [default = 50];
+  optional float cvg_threshold = 6 [default = 0.5];
+  optional float cvg_margin = 7 [default = 0.1];
+  optional bool negative_mining = 8 [default = false];
+}
+
 message L1LossParameter {
   optional bool debug_info = 1 [default = false];
 }
@@ -934,6 +955,16 @@ message L1NLossParameter {
   //cutoff value
   optional float norm_ref = 2 [default = 0.09];
   optional bool debug_info = 3 [default = false];
+}
+
+message L2NLossParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+  optional bool debug_info = 2 [default = false];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters

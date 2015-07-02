@@ -24,6 +24,19 @@ void ThresholdLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   }
 }
 
+template <typename Dtype>
+void ThresholdLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+    const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& bottom) {
+  if (propagate_down[0]) {
+    const int count = bottom[0]->count();
+    Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
+    for (int i = 0; i < count; ++i) {
+      bottom_diff[i] = Dtype(0);
+    }
+  }
+}
+
 #ifdef CPU_ONLY
 STUB_GPU_FORWARD(ThresholdLayer, Forward);
 #endif

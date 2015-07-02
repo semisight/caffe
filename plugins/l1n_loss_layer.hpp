@@ -12,7 +12,7 @@ template <typename Dtype>
 class L1NLossLayer : public LossLayer<Dtype> {
  public:
   explicit L1NLossLayer(const LayerParameter& param)
-      : LossLayer<Dtype>(param), sign_(), norm_(), diff_(), rawLoss_() {}
+      : LossLayer<Dtype>(param), sign_(), norm_h_(), norm_w_(), diff_() {}
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
@@ -42,9 +42,9 @@ class L1NLossLayer : public LossLayer<Dtype> {
     //const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   Blob<Dtype> sign_;
-  Blob<Dtype> norm_;
+  Blob<Dtype> norm_h_;
+  Blob<Dtype> norm_w_;
   Blob<Dtype> diff_;
-  Blob<Dtype> rawLoss_;
 };
 
 #endif

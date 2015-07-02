@@ -1,5 +1,7 @@
 #include "multibox_bbox_loss_layer.hpp"
 
+#include "caffe/plugin.hpp"
+
 template <typename Dtype>
 void MultiboxBboxLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
@@ -85,7 +87,7 @@ STUB_GPU(MultiboxBboxLossLayer);
 #endif
 
 INSTANTIATE_CLASS(MultiboxBboxLossLayer);
-REGISTER_LAYER_CLASS(MultiboxBboxLoss);
+INSTANTIATE_PLUGIN(MultiboxBboxLoss, MultiboxBboxLossLayer);
 
 #ifdef gaga
   if (0) {

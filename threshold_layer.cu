@@ -27,7 +27,7 @@ void ThresholdLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 
-INSTANTIATE_LAYER_GPU_FORWARD(ThresholdLayer);
-
+//INSTANTIATE_LAYER_GPU_FORWARD(ThresholdLayer);
+INSTANTIATE_LAYER_GPU_FUNCS(ThresholdLayer);
 
 }  // namespace caffe
