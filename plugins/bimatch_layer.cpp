@@ -1,11 +1,6 @@
-#include <algorithm>
-#include <vector>
+#include "bimatch_layer.hpp"
 
-#include "caffe/layer.hpp"
-#include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
-
-namespace caffe {
+#include "caffe/plugin.hpp"
 
 #define COORDS_PER_BOX 4
 #define MAX_GROUNDTRUTH_BOXES 2
@@ -95,6 +90,4 @@ STUB_GPU(BimatchLayer);
 #endif
 
 INSTANTIATE_CLASS(BimatchLayer);
-REGISTER_LAYER_CLASS(Bimatch);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(Bimatch, BimatchLayer);

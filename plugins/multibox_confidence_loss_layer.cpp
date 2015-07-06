@@ -1,13 +1,7 @@
 // [based on multinomial logistic loss]
-#include <algorithm>
-#include <cfloat>
-#include <cmath>
-#include <vector>
+#include "multibox_confidence_loss_layer.hpp"
 
-#include "caffe/layer.hpp"
-#include "caffe/util/io.hpp"
-#include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
+#include "caffe/plugin.hpp"
 
 // label_boxes[j]   ground truth bboxes, up to j objects
 // label_nboxes     number of objects, jMax
@@ -63,8 +57,6 @@
 // X_3_1  0
 // X_3_2  0
 
-
-namespace caffe {
 
 template <typename Dtype>
 void MultiboxConfidenceLossLayer<Dtype>::Reshape(
@@ -150,6 +142,4 @@ void MultiboxConfidenceLossLayer<Dtype>::Backward_cpu(
 }
 
 INSTANTIATE_CLASS(MultiboxConfidenceLossLayer);
-REGISTER_LAYER_CLASS(MultiboxConfidenceLoss);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(MultiboxConfidenceLoss, MultiboxConfidenceLossLayer);

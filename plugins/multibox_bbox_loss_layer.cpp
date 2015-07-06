@@ -1,11 +1,4 @@
-#include <vector>
-
-#include "caffe/layer.hpp"
-#include "caffe/util/io.hpp"
-#include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
-
-namespace caffe {
+#include "multibox_bbox_loss_layer.hpp"
 
 template <typename Dtype>
 void MultiboxBboxLossLayer<Dtype>::Reshape(
@@ -93,8 +86,6 @@ STUB_GPU(MultiboxBboxLossLayer);
 
 INSTANTIATE_CLASS(MultiboxBboxLossLayer);
 REGISTER_LAYER_CLASS(MultiboxBboxLoss);
-
-}  // namespace caffe
 
 #ifdef gaga
   if (0) {

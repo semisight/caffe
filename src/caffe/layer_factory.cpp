@@ -65,22 +65,6 @@ shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
 
 REGISTER_LAYER_CREATOR(Pooling, GetPoolingLayer);
 
-// Get tiling layer according to engine.
-template <typename Dtype>
-shared_ptr<Layer<Dtype> > GetTilingLayer(const LayerParameter& param) {
-  TilingParameter_Engine engine = param.tiling_param().engine();
-  if (engine == TilingParameter_Engine_DEFAULT) {
-    engine = TilingParameter_Engine_CAFFE;
-  }
-  if (engine == TilingParameter_Engine_CAFFE) {
-    return shared_ptr<Layer<Dtype> >(new TilingLayer<Dtype>(param));
-  } else {
-    LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
-  }
-}
-
-REGISTER_LAYER_CREATOR(Tiling, GetTilingLayer);
-
 // Get relu layer according to engine.
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetReLULayer(const LayerParameter& param) {

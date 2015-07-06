@@ -1,14 +1,11 @@
 #include <algorithm>
 #include <cfloat>
-#include <vector>
 
-#include "caffe/common.hpp"
-#include "caffe/layer.hpp"
+#include "tiling_layer.hpp"
+
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
-
-namespace caffe {
+#include "caffe/plugin.hpp"
 
 using std::min;
 using std::max;
@@ -100,5 +97,4 @@ STUB_GPU(TilingLayer);
 #endif
 
 INSTANTIATE_CLASS(TilingLayer);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(Tiling, TilingLayer);

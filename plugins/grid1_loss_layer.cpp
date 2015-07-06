@@ -1,13 +1,10 @@
-#include <vector>
+#include "grid1_loss_layer.hpp"
 
 #include "caffe/layer.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
-#include <string>
-
-
-namespace caffe {
+#include "caffe/plugin.hpp"
 
 template <typename Dtype> string my_debug_symbol(Dtype value);
 
@@ -171,6 +168,4 @@ STUB_GPU(Grid1LossLayer);
 #endif
 
 INSTANTIATE_CLASS(Grid1LossLayer);
-REGISTER_LAYER_CLASS(Grid1Loss);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(Grid1Loss, Grid1LossLayer);
