@@ -1,12 +1,6 @@
-#include <vector>
-#include <algorithm>
+#include "l2n_loss_layer.hpp"
 
-#include "caffe/layer.hpp"
-#include "caffe/util/io.hpp"
-#include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
-
-namespace caffe {
+#include "caffe/plugin.hpp"
 
 template <typename Dtype> string my_debug_symbol_bbox_l2n(Dtype value);
 template <typename Dtype> Dtype IOU(Dtype x1, Dtype y1, Dtype x2, Dtype y2, Dtype u1, Dtype v1, Dtype u2, Dtype v2);
@@ -176,6 +170,4 @@ STUB_GPU(L2NLossLayer);
 #endif
 
 INSTANTIATE_CLASS(L2NLossLayer);
-REGISTER_LAYER_CLASS(L2NLoss);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(L2NLoss, L2NLossLayer);

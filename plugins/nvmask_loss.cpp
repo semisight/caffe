@@ -1,14 +1,8 @@
-#include <vector>
+#include "nvmask_loss.hpp"
 
-#include "caffe/layer.hpp"
-#include "caffe/util/io.hpp"
 #include <iomanip>
-#include "caffe/util/math_functions.hpp"
-#include "caffe/vision_layers.hpp"
-#include <string>
 
-
-namespace caffe {
+#include "caffe/plugin.hpp"
 
 template <typename Dtype> string my_debug_symbol(Dtype value);
 
@@ -175,6 +169,4 @@ STUB_GPU(NVMaskLossLayer);
 #endif
 
 INSTANTIATE_CLASS(NVMaskLossLayer);
-REGISTER_LAYER_CLASS(NVMaskLoss);
-
-}  // namespace caffe
+INSTANTIATE_PLUGIN(NVMaskLoss, NVMaskLossLayer);
