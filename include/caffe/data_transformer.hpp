@@ -2,6 +2,9 @@
 #define CAFFE_DATA_TRANSFORMER_HPP
 
 #include <vector>
+#include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
+using namespace cv;
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -36,7 +39,7 @@ class DataTransformer {
    *    set_cpu_data() is used. See data_layer.cpp for an example.
    */
   void Transform(const Datum& datum, Blob<Dtype>* transformed_blob);
-
+  void Transform_nv(const Datum& datum, Blob<Dtype>* transformed_blob, Blob<Dtype>* transformed_label_blob, int cnt); //image and label
   /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to a vector of Datum.
@@ -87,6 +90,24 @@ class DataTransformer {
    */
   void Transform(Blob<Dtype>* input_blob, Blob<Dtype>* transformed_blob);
 
+  struct AugmentSelection
+  {
+      bool flip;
+      float degree;
+      Size crop;
+      float scale;
+  };
+
+  void generateLabelMap(Dtype*, Mat img_aug, vector<vector<Dtype> > bboxlist_aug, int cnt);
+  void visualize_bboxlist(Mat& img, Mat& img_aug, vector<vector<Dtype> >& bboxlist, vector<vector<Dtype> >& bboxlist_aug, Dtype* transformed_label, AugmentSelection, int cnt);
+
+  bool augmentation_flip(Mat& img, Mat& img_aug, vector<vector<Dtype> > bboxlist, vector<vector<Dtype> >&);
+  float augmentation_rotate(Mat& img_src, Mat& img_aug, vector<vector<Dtype> > bboxlist, vector<vector<Dtype> >&);
+  float augmentation_scale(Mat& img, Mat& img_temp, vector<vector<Dtype> > bboxlist, vector<vector<Dtype> >&);
+  Size augmentation_crop(Mat& img_temp, Mat& img_aug, vector<vector<Dtype> > bboxlist, vector<vector<Dtype> >&);
+
+  AugmentSelection as;
+
  protected:
    /**
    * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).
@@ -99,15 +120,18 @@ class DataTransformer {
   virtual int Rand(int n);
 
   void Transform(const Datum& datum, Dtype* transformed_data);
+  void Transform_nv(const Datum& datum, Dtype* transformed_data, Dtype* transformed_label, int cnt);
+  
   // Tranformation parameters
   TransformationParameter param_;
-
 
   shared_ptr<Caffe::RNG> rng_;
   Phase phase_;
   Blob<Dtype> data_mean_;
   vector<Dtype> mean_values_;
 };
+
+
 
 }  // namespace caffe
 
