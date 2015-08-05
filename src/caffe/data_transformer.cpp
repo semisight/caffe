@@ -698,7 +698,8 @@ void DataTransformer<Dtype>::visualize_bboxlist(Mat& img, Mat& img_aug, vector<v
     rectangle(img_vis, Point(0,0+img.rows), Point(param_.crop_size_x(), param_.crop_size_y()+img.rows), Scalar(255,255,255), 1);
 
     char imagename [100];
-    sprintf(imagename, "/home/shihenw/Desktop/augment_%d.jpg", cnt);
+    sprintf(imagename, "%s/augment_%d.jpg", param_.img_header().c_str(), cnt);
+    //LOG(INFO) << "filename is " << imagename;
     imwrite(imagename, img_vis);
   }
   else {
@@ -706,7 +707,8 @@ void DataTransformer<Dtype>::visualize_bboxlist(Mat& img, Mat& img_aug, vector<v
     setLabel(img_vis, str_info, Point(0, img_vis.rows-50));
 
     char imagename [100];
-    sprintf(imagename, "/home/shihenw/Desktop/augment_%d.jpg", cnt);
+    sprintf(imagename, "%s/augment_%d.jpg", param_.img_header().c_str(), cnt);
+    //LOG(INFO) << "filename is " << imagename;
     imwrite(imagename, img_vis);
   }
 }
