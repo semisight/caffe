@@ -1,0 +1,11 @@
+# Changelog
+
+## 1.0.0 (Initial) - 8/13/2015
+### Added
+- This changelog
+- Multi-gpu (from NVIDIA/caffe v0.13.1)
+- CNMeM (from NVIDIA/caffe v0.13.1)
+- cuDNN v3 support (from NVIDIA/caffe v0.13.1)
+
+### Fixed
+- Many, many things
