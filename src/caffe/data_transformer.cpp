@@ -589,10 +589,10 @@ void DataTransformer<Dtype>::generateLabelMap(Dtype* transformed_label, Mat img_
           transformed_label[channelOffset*0 + g_y*grid_x + g_x] = 1.0;
           //counter++;
           //bbox
-          transformed_label[channelOffset*1 + g_y*grid_x + g_x] = float(x1 - this_cell_x)/param_.bbox_norm_factor(); //((x1 - this_cell_x)/float(rezX) + 1)/2.0;
-          transformed_label[channelOffset*2 + g_y*grid_x + g_x] = float(y1 - this_cell_y)/param_.bbox_norm_factor(); //((y1 - this_cell_y)/float(rezY) + 1)/2.0;
-          transformed_label[channelOffset*3 + g_y*grid_x + g_x] = float(x2 - this_cell_x)/param_.bbox_norm_factor(); //((x2 - this_cell_x)/float(rezX) + 1)/2.0;
-          transformed_label[channelOffset*4 + g_y*grid_x + g_x] = float(y2 - this_cell_y)/param_.bbox_norm_factor(); //((y2 - this_cell_y)/float(rezY) + 1)/2.0;
+          transformed_label[channelOffset*1 + g_y*grid_x + g_x] = (float(x1 - this_cell_x)/param_.bbox_norm_factor() + 1.0)/2.0; //((x1 - this_cell_x)/float(rezX) + 1)/2.0;
+          transformed_label[channelOffset*2 + g_y*grid_x + g_x] = (float(y1 - this_cell_y)/param_.bbox_norm_factor() + 1.0)/2.0; //((y1 - this_cell_y)/float(rezY) + 1)/2.0;
+          transformed_label[channelOffset*3 + g_y*grid_x + g_x] = (float(x2 - this_cell_x)/param_.bbox_norm_factor() + 1.0)/2.0; //((x2 - this_cell_x)/float(rezX) + 1)/2.0;
+          transformed_label[channelOffset*4 + g_y*grid_x + g_x] = (float(y2 - this_cell_y)/param_.bbox_norm_factor() + 1.0)/2.0; //((y2 - this_cell_y)/float(rezY) + 1)/2.0;
         }
         //LOG(INFO) << this_cell_x << " and " << this_cell_y << " is covered? " << covered;
       }
@@ -674,10 +674,10 @@ void DataTransformer<Dtype>::visualize_bboxlist(Mat& img, Mat& img_aug, vector<v
       // draw bounding box
       if(transformed_label[channelOffset*1 + idx] != 0 && transformed_label[channelOffset*2 + idx] != 0 &&
          transformed_label[channelOffset*3 + idx] != 0 && transformed_label[channelOffset*4 + idx] != 0){
-        int x1 = int((transformed_label[channelOffset*1 + idx] * param_.bbox_norm_factor()) + x); //int(((transformed_label[channelOffset*1 + idx]*2-1) * img.cols) + x);
-        int y1 = int((transformed_label[channelOffset*2 + idx] * param_.bbox_norm_factor()) + y); //int(((transformed_label[channelOffset*2 + idx]*2-1) * img.rows) + y);
-        int x2 = int((transformed_label[channelOffset*3 + idx] * param_.bbox_norm_factor()) + x); //int(((transformed_label[channelOffset*3 + idx]*2-1) * img.cols) + x);
-        int y2 = int((transformed_label[channelOffset*4 + idx] * param_.bbox_norm_factor()) + y); //int(((transformed_label[channelOffset*4 + idx]*2-1) * img.rows) + y);
+        int x1 = int(((transformed_label[channelOffset*1 + idx]*2.0-1.0) * param_.bbox_norm_factor()) + x); //int(((transformed_label[channelOffset*1 + idx]*2-1) * img.cols) + x);
+        int y1 = int(((transformed_label[channelOffset*2 + idx]*2.0-1.0) * param_.bbox_norm_factor()) + y); //int(((transformed_label[channelOffset*2 + idx]*2-1) * img.rows) + y);
+        int x2 = int(((transformed_label[channelOffset*3 + idx]*2.0-1.0) * param_.bbox_norm_factor()) + x); //int(((transformed_label[channelOffset*3 + idx]*2-1) * img.cols) + x);
+        int y2 = int(((transformed_label[channelOffset*4 + idx]*2.0-1.0) * param_.bbox_norm_factor()) + y); //int(((transformed_label[channelOffset*4 + idx]*2-1) * img.rows) + y);
 
         rectangle(img_vis, Point(x1,y1+img.rows), Point(x2,y2+img.rows), Scalar(0,255,0), 1);
         bboxCounter++;
