@@ -23,32 +23,21 @@ using namespace cv;
 namespace caffe {
 
 template <typename Dtype>
-NVDataLayer<Dtype>::~NVDataLayer<Dtype>() {
-  this->JoinPrefetchThread();
+NVDataLayer<Dtype>::NVDataLayer(const LayerParameter& param)
+  : BasePrefetchingDataLayer<Dtype>(param),
+    reader_(param) {
 }
 
 template <typename Dtype>
-void NVDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+NVDataLayer<Dtype>::~NVDataLayer() {
+  this->StopInternalThread();
+}
+
+template <typename Dtype>
+void NVDataLayer<Dtype>::NVDataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  // Initialize DB
-  db_.reset(db::GetDB(this->layer_param_.nvdata_param().backend()));
-  db_->Open(this->layer_param_.nvdata_param().source(), db::READ);
-  cursor_.reset(db_->NewCursor());
-
-  // Check if we should randomly skip a few data points
-  if (this->layer_param_.nvdata_param().rand_skip()) {
-    unsigned int skip = caffe_rng_rand() %
-                        this->layer_param_.nvdata_param().rand_skip();
-    LOG(INFO) << "Skipping first " << skip << " data points.";
-    while (skip-- > 0) {
-      cursor_->Next();
-    }
-  }
   // Read a data point, and use it to initialize the top blob.
-  Datum datum;
-  datum.ParseFromString(cursor_->value());
-
-  //LOG(INFO) << "Datum dimension: " << datum.channels() << datum.height() << datum.width();
+  Datum& datum = *(reader_.full().peek());
 
   bool force_color = this->layer_param_.nvdata_param().force_encoded_color();
   if ((force_color && DecodeDatum(&datum, true)) ||
@@ -57,90 +46,70 @@ void NVDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
 
   // image
-  int crop_size = this->layer_param_.transform_param().crop_size();
-  int crop_size_x = this->layer_param_.transform_param().crop_size_x();
-  int crop_size_y = this->layer_param_.transform_param().crop_size_y();
-
+  const int crop_size = this->layer_param_.transform_param().crop_size();
+  const int batch_size = this->layer_param_.nvdata_param().batch_size();
   if (crop_size > 0) {
-    top[0]->Reshape(this->layer_param_.nvdata_param().batch_size(),
-        datum.channels(), crop_size, crop_size);
-    this->prefetch_data_.Reshape(this->layer_param_.nvdata_param().batch_size(),
-        datum.channels(), crop_size, crop_size);
-    this->transformed_data_.Reshape(1, datum.channels(), crop_size, crop_size);
-  } 
-  else {
-    if(this->phase_ == TRAIN){
-      top[0]->Reshape(
-          this->layer_param_.nvdata_param().batch_size(), 
-          //3, datum.height(), datum.width());
-          3, crop_size_y, crop_size_x);
-      this->prefetch_data_.Reshape(this->layer_param_.nvdata_param().batch_size(),
-          //3, datum.height(), datum.width());
-          3, crop_size_y, crop_size_x);
-      this->transformed_data_.Reshape(1, 
-          //3, datum.height(), datum.width());
-          3, crop_size_y, crop_size_x);
+    top[0]->Reshape(batch_size, datum.channels(), crop_size, crop_size);
+    for (int i = 0; i < this->PREFETCH_COUNT; ++i) {
+      this->prefetch_[i].data_.Reshape(batch_size, datum.channels(),
+          crop_size, crop_size);
     }
-    else {
-      top[0]->Reshape(this->layer_param_.nvdata_param().batch_size(), 3, datum.height(), datum.width());
-      this->prefetch_data_.Reshape(this->layer_param_.nvdata_param().batch_size(), 3, datum.height(), datum.width());
-      this->transformed_data_.Reshape(1, 3, datum.height(), datum.width());
-    }
-  }
+    this->transformed_data_.Reshape(1, datum.channels(),
+        crop_size, crop_size);
+  } else {
+    const int height = this->phase_ != TRAIN ? datum.height() :
+      this->layer_param_.transform_param().crop_size_y();
+    const int width = this->phase_ != TRAIN ? datum.width() :
+      this->layer_param_.transform_param().crop_size_x();
 
-  //LOG(INFO) << "output data size: " << top[0]->num() << "," << top[0]->channels() << "," << top[0]->height() << "," << top[0]->width();
+    top[0]->Reshape(batch_size, datum.channels(),
+        height, width);
+    for (int i = 0; i < this->PREFETCH_COUNT; ++i) {
+      this->prefetch_[i].data_.Reshape(batch_size, datum.channels(),
+          height, width);
+    }
+    this->transformed_data_.Reshape(1, datum.channels(),
+        height, width);
+  }
+  LOG(INFO) << "output data size: " << top[0]->num() << ","
+      << top[0]->channels() << "," << top[0]->height() << ","
+      << top[0]->width();
 
   // label
-  if (this->output_labels_) { //output_labels_ will be 1 if there are 2 tops in prototxt, see base_data_layer.cpp
+  if (this->output_labels_) {
     const int stride = this->layer_param_.transform_param().stride();
-    if(this->phase_ == TRAIN){
-      top[1]->Reshape(this->layer_param_.nvdata_param().batch_size(), 
-                    //5, datum.height()/stride, datum.width()/stride);
-                    5, crop_size_y/stride, crop_size_x/stride);
-      this->prefetch_label_.Reshape(this->layer_param_.nvdata_param().batch_size(), 
-                    //5, datum.height()/stride, datum.width()/stride);
-                    5, crop_size_y/stride, crop_size_x/stride);
-      this->transformed_label_.Reshape(1, 
-                    //5, datum.height()/stride, datum.width()/stride);
-                    5, crop_size_y/stride, crop_size_x/stride);
+    const int height = this->phase_ != TRAIN ? datum.height() :
+      this->layer_param_.transform_param().crop_size_y();
+    const int width = this->phase_ != TRAIN ? datum.width() :
+      this->layer_param_.transform_param().crop_size_x();
+
+    top[1]->Reshape(batch_size, 5, height/stride, width/stride);
+    for (int i = 0; i < this->PREFETCH_COUNT; ++i) {
+      this->prefetch_[i].label_.Reshape(batch_size, 5, height/stride, width/stride);
     }
-    else {
-      top[1]->Reshape(this->layer_param_.nvdata_param().batch_size(), 5, datum.height()/stride, datum.width()/stride);
-      this->prefetch_label_.Reshape(this->layer_param_.nvdata_param().batch_size(), 5, datum.height()/stride, datum.width()/stride);
-      this->transformed_label_.Reshape(1, 5, datum.height()/stride, datum.width()/stride);
-    }
-    LOG(INFO) << "output label size: " << top[1]->num() << "," << top[1]->channels() << "," << top[1]->height() << "," << top[1]->width();
+    this->transformed_label_.Reshape(1, 5, height/stride, width/stride);
   }
 }
 
-// This function is used to create a thread that prefetches the data.
-template <typename Dtype>
-void NVDataLayer<Dtype>::InternalThreadEntry() {
-  static int cnt = -1;
-  cnt++;
-  //LOG(INFO) << "InternalThreadEntry = " << cnt; 
-  std::cout.flush();
-  
-  //LOG(INFO) << "this->prefetch_data_.count() = " << this->prefetch_data_.count();
-  //LOG(INFO) << "this->output_labels_ = " << this->output_labels_; //always zero
-
+// This function is called on prefetch thread
+template<typename Dtype>
+void NVDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   CPUTimer batch_timer;
   batch_timer.Start();
-  double read_time = 0;
+  double deque_time = 0;
+  double decod_time = 0;
   double trans_time = 0;
+  static int cnt = 0;
   CPUTimer timer;
-  CHECK(this->prefetch_data_.count());
+  CHECK(batch->data_.count());
   CHECK(this->transformed_data_.count());
-  CHECK(this->transformed_label_.count());
 
   // Reshape on single input batches for inputs of varying dimension.
   const int batch_size = this->layer_param_.nvdata_param().batch_size();
   const int crop_size = this->layer_param_.transform_param().crop_size();
-
   bool force_color = this->layer_param_.nvdata_param().force_encoded_color();
   if (batch_size == 1 && crop_size == 0) {
-    Datum datum;
-    datum.ParseFromString(cursor_->value());
+    Datum& datum = *(reader_.full().peek());
     if (datum.encoded()) {
       if (force_color) {
         DecodeDatum(&datum, true);
@@ -148,23 +117,25 @@ void NVDataLayer<Dtype>::InternalThreadEntry() {
         DecodeDatumNative(&datum);
       }
     }
-    this->prefetch_data_.Reshape(1, datum.channels(), datum.height(), datum.width());
-    this->transformed_data_.Reshape(1, 3, datum.height(), datum.width());
+    batch->data_.Reshape(1, datum.channels(),
+        datum.height(), datum.width());
+    this->transformed_data_.Reshape(1, datum.channels(),
+        datum.height(), datum.width());
   }
 
-  Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
+  Dtype* top_data = batch->data_.mutable_cpu_data();
   Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
+
   if (this->output_labels_) {
-    top_label = this->prefetch_label_.mutable_cpu_data();
+    top_label = batch->label_.mutable_cpu_data();
   }
-
   for (int item_id = 0; item_id < batch_size; ++item_id) {
-    timer.Start();
     // get a blob
-    Datum datum;
-    datum.ParseFromString(cursor_->value());
+    timer.Start();
+    Datum& datum = *(reader_.full().pop("Waiting for data"));
+    deque_time += timer.MicroSeconds();
 
-    // fetch 4-dim datum from lmdb
+    timer.Start();
     cv::Mat cv_img;
     if (datum.encoded()) {
       if (force_color) {
@@ -179,56 +150,36 @@ void NVDataLayer<Dtype>::InternalThreadEntry() {
         << "convert_imageset.";
       }
     }
-    read_time += timer.MicroSeconds();
-    timer.Start();
+    decod_time += timer.MicroSeconds();
 
     // Apply data transformations (mirror, scale, crop...)
-    // for both image and label map
-    int offset_data = this->prefetch_data_.offset(item_id);
-    int offset_label = this->prefetch_label_.offset(item_id);
-    //LOG(INFO) << "prefetch label size " << this->prefetch_label_.count();
-    //LOG(INFO) << "offset of data and label are " << offset_data << " and " << offset_label;
-    this->transformed_data_.set_cpu_data(top_data + offset_data);
-    this->transformed_label_.set_cpu_data(top_label + offset_label);
-
+    timer.Start();
+    int offset = batch->data_.offset(item_id);
+    this->transformed_data_.set_cpu_data(top_data + offset);
+    this->transformed_label_.set_cpu_data(top_label + offset);
     if (datum.encoded()) {
-      //LOG(INFO) << "cv_img is being used for number " << cnt;
       this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
     } else {
-      //LOG(INFO) << "datum is being used for size " << datum.channels() << " " << datum.height() << " " << datum.width();
-      this->data_transformer_->Transform_nv(datum, &(this->transformed_data_), &(this->transformed_label_), cnt*batch_size+item_id);
-      //LOG(INFO) << "datum is used for number " << cnt;
+      this->data_transformer_->Transform_nv(datum, &(this->transformed_data_),
+        &(this->transformed_label_), cnt);
+      ++cnt;
     }
-
-    //label
-    // if (this->output_labels_) {
-    //   top_label[item_id] = datum.label();
-    // }
+    if (this->output_labels_) {
+      top_label[item_id] = datum.label();
+    }
     trans_time += timer.MicroSeconds();
-    // go to the next iter
-    cursor_->Next();
-    if (!cursor_->valid()) {
-      DLOG(INFO) << "Restarting data prefetching from start.";
-      cursor_->SeekToFirst();
-    }
-  }  //batch size
+
+    reader_.free().push(const_cast<Datum*>(&datum));
+  }
   batch_timer.Stop();
-  DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
-  DLOG(INFO) << "     Read time: " << read_time / 1000 << " ms.";
-  DLOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
 
-  std::cout.flush();
+#ifdef BENCHMARK_DATA
+  LOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  LOG(INFO) << "  Dequeue time: " << deque_time / 1000 << " ms.";
+  LOG(INFO) << "   Decode time: " << decod_time / 1000 << " ms.";
+  LOG(INFO) << "Transform time: " << trans_time / 1000 << " ms.";
+#endif
 }
-
-// template <typename Dtype>
-// void NVDataLayer<Dtype>::generateLabelMap() {
-//   LOG(INFO) << "dim of this->prefetch_data is: " << this->prefetch_data_.num()    << "," << this->prefetch_data_.channels() << "," 
-//                                                   << this->prefetch_data_.height() << "," << this->prefetch_data_.width();
-//   LOG(INFO) << "dim of this->prefetch_label is: " << this->prefetch_label_.num()    << "," << this->prefetch_label_.channels() << "," 
-//                                                   << this->prefetch_label_.height() << "," << this->prefetch_label_.width();
-
-// }
-
 
 INSTANTIATE_CLASS(NVDataLayer);
 REGISTER_LAYER_CLASS(NVData);

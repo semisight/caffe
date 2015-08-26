@@ -424,7 +424,7 @@ TYPED_TEST(ConvolutionLayerTest, TestGradientGroup) {
 #ifdef USE_CUDNN
 
 template <typename Dtype>
-class CuDNNConvolutionLayerTest : public ::testing::Test {
+class CuDNNConvolutionLayerTest : public GPUDeviceTest<Dtype> {
  protected:
   CuDNNConvolutionLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 3, 6, 4)),
@@ -467,7 +467,6 @@ class CuDNNConvolutionLayerTest : public ::testing::Test {
 TYPED_TEST_CASE(CuDNNConvolutionLayerTest, TestDtypes);
 
 TYPED_TEST(CuDNNConvolutionLayerTest, TestSetupCuDNN) {
-  Caffe::set_mode(Caffe::GPU);
   this->blob_bottom_vec_.push_back(this->blob_bottom_2_);
   this->blob_top_vec_.push_back(this->blob_top_2_);
   LayerParameter layer_param;
@@ -505,7 +504,6 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSetupCuDNN) {
 }
 
 TYPED_TEST(CuDNNConvolutionLayerTest, TestSimpleConvolutionCuDNN) {
-  Caffe::set_mode(Caffe::GPU);
   this->blob_bottom_vec_.push_back(this->blob_bottom_2_);
   this->blob_top_vec_.push_back(this->blob_top_2_);
   LayerParameter layer_param;
@@ -541,7 +539,6 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSimpleConvolutionCuDNN) {
 }
 
 TYPED_TEST(CuDNNConvolutionLayerTest, TestSimpleConvolutionGroupCuDNN) {
-  Caffe::set_mode(Caffe::GPU);
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
@@ -572,7 +569,7 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSobelConvolutionCuDNN) {
   // Test separable convolution by computing the Sobel operator
   // as a single filter then comparing the result
   // as the convolution of two rectangular filters.
-  Caffe::set_mode(Caffe::GPU);
+
   // Fill bottoms with identical Gaussian noise.
   shared_ptr<GaussianFiller<TypeParam> > filler;
   FillerParameter filler_param;
@@ -606,6 +603,7 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSobelConvolutionCuDNN) {
     weights[i +  8] =  1;
   }
   layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  cudaDeviceSynchronize();
   layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   // Compute Sobel G_x operator as separable 3 x 1 and 1 x 3 convolutions.
   // (1) the [1 2 1] column filter
@@ -633,6 +631,7 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSobelConvolutionCuDNN) {
     weights_1[i +  2] = 1;
   }
   layer->SetUp(sep_blob_bottom_vec, sep_blob_top_vec);
+  cudaDeviceSynchronize();
   layer->Forward(sep_blob_bottom_vec, sep_blob_top_vec);
   // (2) the [-1 0 1] row filter
   blob_sep->CopyFrom(*this->blob_top_2_, false, true);
@@ -655,6 +654,7 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSobelConvolutionCuDNN) {
     weights_2[i +  2] =  1;
   }
   layer->SetUp(sep_blob_bottom_vec, sep_blob_top_vec);
+  cudaDeviceSynchronize();
   layer->Forward(sep_blob_bottom_vec, sep_blob_top_vec);
   // Test equivalence of full and separable filters.
   const TypeParam* top_data = this->blob_top_->cpu_data();
@@ -665,7 +665,6 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestSobelConvolutionCuDNN) {
 }
 
 TYPED_TEST(CuDNNConvolutionLayerTest, TestGradientCuDNN) {
-  Caffe::set_mode(Caffe::GPU);
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
@@ -683,7 +682,6 @@ TYPED_TEST(CuDNNConvolutionLayerTest, TestGradientCuDNN) {
 }
 
 TYPED_TEST(CuDNNConvolutionLayerTest, TestGradientGroupCuDNN) {
-  Caffe::set_mode(Caffe::GPU);
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();

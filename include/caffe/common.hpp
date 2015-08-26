@@ -18,8 +18,13 @@
 
 #include "caffe/util/device_alternate.hpp"
 
+#ifdef USE_CNMEM
+// cuMEM integration
+#include <cnmem.h>
+#endif
+
 // gflags 2.1 issue: namespace google was changed to gflags without warning.
-// Luckily we will be able to use GFLAGS_GFAGS_H_ to detect if it is version
+// Luckily we will be able to use GFLAGS_GFLAGS_H_ to detect if it is version
 // 2.1. If yes, we will add a temporary solution to redirect the namespace.
 // TODO(Yangqing): Once gflags solves the problem in a more elegant way, let's
 // remove the following hack.
@@ -98,12 +103,12 @@ void GlobalInit(int* pargc, char*** pargv);
 class Caffe {
  public:
   ~Caffe();
-  inline static Caffe& Get() {
-    if (!singleton_.get()) {
-      singleton_.reset(new Caffe());
-    }
-    return *singleton_;
-  }
+
+  // Thread local context for Caffe. Moved to common.cpp instead of
+  // including boost/thread.hpp to avoid a boost/NVCC issues (#1009, #1010)
+  // on OSX. Also fails on Linux with CUDA 7.0.18.
+  static Caffe& Get();
+
   enum Brew { CPU, GPU };
 
   // This random number generator facade hides boost and CUDA rng
@@ -132,6 +137,9 @@ class Caffe {
   inline static curandGenerator_t curand_generator() {
     return Get().curand_generator_;
   }
+#ifdef USE_CUDNN
+  inline static cudnnHandle_t cudnn_handle() { return Get().cudnn_handle_; }
+#endif
 #endif
 
   // Returns the mode: running on CPU or GPU.
@@ -149,22 +157,87 @@ class Caffe {
   static void SetDevice(const int device_id);
   // Prints the current GPU status.
   static void DeviceQuery();
+  // Parallel training info
+  inline static int solver_count() { return Get().solver_count_; }
+  inline static void set_solver_count(int val) { Get().solver_count_ = val; }
+  inline static bool root_solver() { return Get().root_solver_; }
+  inline static void set_root_solver(bool val) { Get().root_solver_ = val; }
 
  protected:
 #ifndef CPU_ONLY
   cublasHandle_t cublas_handle_;
   curandGenerator_t curand_generator_;
+#ifdef USE_CUDNN
+  cudnnHandle_t cudnn_handle_;
+#endif
 #endif
   shared_ptr<RNG> random_generator_;
 
   Brew mode_;
-  static shared_ptr<Caffe> singleton_;
+  int solver_count_;
+  bool root_solver_;
 
  private:
   // The private constructor to avoid duplicate instantiation.
   Caffe();
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
+};
+
+class MemoryHandler {
+ public:
+  static MemoryHandler& Get();
+#ifndef CPU_ONLY
+  static void mallocGPU(void **ptr, size_t size,
+                        cudaStream_t stream = cudaStreamDefault);
+  static void freeGPU(void *ptr, cudaStream_t = cudaStreamDefault);
+  static void registerStream(cudaStream_t stream);
+#endif
+  static void setGPUs(const std::vector<int>& gpus) { Get().gpus_ = gpus; }
+  static void usePool() { Get().using_pool_ = true; }
+  static bool usingPool() {
+#ifdef USE_CNMEM
+    return Get().using_pool_;
+#else
+    return false;
+#endif
+  }
+  static void getInfo(size_t *free_mem, size_t *used_mem);
+  static void destroy();
+  ~MemoryHandler() { }
+
+ private:
+  MemoryHandler() : using_pool_(false), initialized_(false) {}
+  static void Init();
+  // static void Destroy();
+#ifndef CPU_ONLY
+  void allocate_memory(void **ptr, size_t size, cudaStream_t stream);
+  void free_memory(void *ptr, cudaStream_t stream);
+#endif
+  DISABLE_COPY_AND_ASSIGN(MemoryHandler);
+
+  bool using_pool_;
+  bool initialized_;
+  std::vector<int> gpus_;
+};
+
+class MemoryHandlerActivator {
+ public:
+  explicit MemoryHandlerActivator(const std::vector<int>& gpus)
+            : using_pool_(false) {
+    if (gpus.size() > 0) {
+      using_pool_ = true;
+      MemoryHandler::usePool();
+      MemoryHandler::setGPUs(gpus);
+    }
+  }
+  ~MemoryHandlerActivator() {
+    if (using_pool_) {
+      MemoryHandler::destroy();
+    }
+  }
+ private:
+  int using_pool_;
 };
 
 }  // namespace caffe
