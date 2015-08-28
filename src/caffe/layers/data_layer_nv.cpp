@@ -1,10 +1,4 @@
 #include <opencv2/core/core.hpp>
-#include <opencv2/opencv.hpp>
-#include <iostream>
-//#include <opencv2/highgui/highgui.h>
-
-using namespace cv;
-//using namespace std;
 
 #include <stdint.h>
 
@@ -17,8 +11,6 @@ using namespace cv;
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/benchmark.hpp"
 #include "caffe/util/io.hpp"
-#include "caffe/util/math_functions.hpp"
-#include "caffe/util/rng.hpp"
 
 namespace caffe {
 
@@ -34,7 +26,7 @@ NVDataLayer<Dtype>::~NVDataLayer() {
 }
 
 template <typename Dtype>
-void NVDataLayer<Dtype>::NVDataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+void NVDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   // Read a data point, and use it to initialize the top blob.
   Datum& datum = *(reader_.full().peek());

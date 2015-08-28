@@ -10,6 +10,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/data_reader.hpp"
+#include "caffe/data_reader_nv.hpp"
 #include "caffe/data_transformer.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/internal_thread.hpp"
@@ -111,7 +112,7 @@ class NVDataLayer : public BasePrefetchingDataLayer<Dtype> {
  public:
   explicit NVDataLayer(const LayerParameter& param);
   virtual ~NVDataLayer();
-  virtual void NVDataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
   virtual inline const char* type() const { return "NVData"; }
@@ -122,7 +123,7 @@ class NVDataLayer : public BasePrefetchingDataLayer<Dtype> {
  protected:
   virtual void load_batch(Batch<Dtype>* batch);
 
-  DataReader reader_;
+  NVDataReader reader_;
   Blob<Dtype> transformed_label_;
 };
 
